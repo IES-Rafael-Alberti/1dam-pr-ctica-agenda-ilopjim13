@@ -66,16 +66,10 @@ def cargar_contactos(contactos: list):
 
 
 def pedir_nombre():
-    nombre = input("Introduce el nombre del contacto: ").capitalize()
+    nombre = input("Introduce el nombre del contacto: ").title()
     while nombre == "" or nombre == " ":
         print("**ERROR** vuleve a intentarlo.")
-        nombre = input("Introduce el nombre del contacto: ").capitalize()
-    if " " in nombre:
-        nombre_compuesto = nombre.split(" ")
-        nombre_inicial_mayus = nombre_compuesto[1].capitalize()
-        nombre_compuesto[1] = nombre_inicial_mayus
-        nombre_compuesto = (" ".join(nombre_compuesto))
-        return nombre_compuesto
+        nombre = input("Introduce el nombre del contacto: ").title()
     return nombre
 
 
@@ -109,12 +103,17 @@ def validar_telefono(telefono):
 
 
 def pedir_telefono():
-    telefono = input("Introduce el telefono del contacto: ").replace(" ", "")
     lista_telefonos= []
+    cont = 1
+    print("Introduce los teléfonos (ENTER para salir)")
+    telefono = input("Teléfono {cont}: ").replace(" ", "")
+    if telefono == "":
+        print("No has introducido ningún teléfono para el contacto.")
     while telefono != "":
         if validar_telefono(telefono):
             lista_telefonos.append(telefono)
-        telefono = input("Introduce el telefono del contacto: ").replace(" ", "")
+        telefono = input("Teléfono {cont}: ").replace(" ", "")
+        cont += 1
     return lista_telefonos
 
 
@@ -125,7 +124,7 @@ def agregar_contacto(contactos:list, email):
         apellido = input("Introduce el apellido del contacto: ").capitalize()
         email_nuevo = pedir_email(email)
         telefono = pedir_telefono()
-        pregunta = input("¿Está seguro que quiere añadir este contacto? ")
+        pregunta = preguntas("¿Está seguro que quiere añadir este contacto? ")
     contactos.append(dict([("nombre", nombre), ("apellido", apellido), ("email", email_nuevo), ("telefono", telefono)]))
     print(f"Se ha añadido a {nombre} con éxito.")
 
@@ -162,7 +161,8 @@ def eliminar_contacto(contactos: list, email: str):
 
 def ordenar_por_nombre(contactos:list):
     contactos_ordenados = contactos.copy()
-    contactos_ordenados.reverse()
+    for i in contactos_ordenados:
+        i['nombre']
     print(contactos_ordenados)
 
 
@@ -192,13 +192,19 @@ def agenda(contactos: list):
     """
     #TODO: Crear un bucle para mostrar el menú y ejecutar las funciones necesarias según la opción seleccionada...
 
-    while opcion != 7:
+    while opcion != 8:
         mostrar_menu()
         opcion = pedir_opcion()
 
-        #TODO: Se valorará que utilices la diferencia simétrica de conjuntos para comprobar que la opción es un número entero del 1 al 6
-        if opcion in OPCIONES_MENU:
+        #TODO: Se valorará que utilices la diferencia simétrica de conjuntos para comprobar que la opción es un número entero del 1 al 7
+        diferencia = diferencia_simetrica()
+        if opcion in diferencia:
             print("")
+
+
+def diferencia_simetrica() -> set: 
+    diferencia = {8} ^ OPCIONES_MENU
+    return diferencia
 
 
 def pulse_tecla_para_continuar():
@@ -215,10 +221,10 @@ def guardar_email(contactos: list) -> set:
     return email
 
 def preguntas(msj):
-    pregunta = input(f"Quieres {msj} un contacto? (s/si/n/no) ")
+    pregunta = input(msj)
     while pregunta != "s" and pregunta != "si" and pregunta != "n" and pregunta != "no":
         print("**ERROR** entrada inválida")
-        pregunta = input(f"¿Quieres {msj} un contacto? (s/si/n/no) ")
+        pregunta = input(msj)
     return pregunta
 
 
@@ -246,7 +252,7 @@ def main():
     # - De igual manera, aunque existan espacios entre el prefijo y los 9 números al introducirlo, debe almacenarse sin espacios.
     # - Por ejemplo, será posible introducir el número +34 600 100 100, pero guardará +34600100100 y cuando se muestren los contactos, el telófono se mostrará como +34-600100100. 
     #TODO: Realizar una llamada a la función agregar_contacto con todo lo necesario para que funcione correctamente.
-    preguntas("agregar")
+    preguntas("Quieres agregar un contacto? (s/si/n/no) ")
     agregar_contacto(contactos, email)
 
 
@@ -254,6 +260,7 @@ def main():
     borrar_consola()
 
     #TODO: Realizar una llamada a la función eliminar_contacto con todo lo necesario para que funcione correctamente, eliminando el contacto con el email rciruelo@gmail.com
+    preguntas("Quieres eliminar un contacto? (s/si/n/no) ")
     eliminar_contacto(contactos, email)
 
     pulse_tecla_para_continuar()
@@ -276,6 +283,7 @@ def main():
     # ** resto de contactos **
     #
     #TODO: Realizar una llamada a la función mostrar_contactos con todo lo necesario para que funcione correctamente.
+    preguntas("Quieres ver todos los contacto? (s/si/n/no) ")
     mostrar_contactos(contactos)
 
     pulse_tecla_para_continuar()
