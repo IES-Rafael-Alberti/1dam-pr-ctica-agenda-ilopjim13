@@ -2,8 +2,7 @@ import copy
 from os import path
 import pathlib
 import pytest
-
-from ExamenU3.agenda_solucion_doc import(
+from src.agenda import(
     cargar_contactos,
     validar_email,
     pedir_email,
@@ -11,6 +10,15 @@ from ExamenU3.agenda_solucion_doc import(
     buscar_contacto,
     pedir_opcion,
 )
+
+# from ExamenU3.agenda_solucion_doc import(
+#     cargar_contactos,
+#     validar_email,
+#     pedir_email,
+#     validar_telefono,
+#     buscar_contacto,
+#     pedir_opcion,
+# )
 
 
 # Simulamos un archivo CSV con datos de contacto para las pruebas
