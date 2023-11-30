@@ -73,31 +73,38 @@ def pedir_nombre():
     return nombre
 
 
-def validar_email(email_nuevo, contactos,  noce = True):
-    for i in contactos:
-        if email_nuevo.lower() in contactos[i]['email']:
-            noce = True
-            raise ValueError("el email ya existe en la agenda")
+def validar_email(email_nuevo, email, comprobar):
     if email_nuevo == "" or email_nuevo == " ":
-        noce = False
+        comprobar = False
         raise ValueError("el email no puede ser una cadena vacía")
-    if "@" not in email_nuevo:
-        noce = False
+    elif email_nuevo.lower() in email:
+        comprobar = True
+        raise ValueError("el email ya existe en la agenda")
+    elif "@" not in email_nuevo:
+        comprobar = False
         raise ValueError("el email no es un correo válido")
 
 
 def pedir_email(email:set):
-        email_nuevo = input("Introduce el email del contacto: ")
+        email_nuevo = "a"
         while email_nuevo.lower() in email or email_nuevo == "" or email_nuevo == " " or "@" not in email_nuevo:
-            try:
-                validar_email(email_nuevo, email)
-            except ValueError as e:
-                print(e)
-                email = input("Introduce el email del contacto: ")
-                return email_nuevo
+            email_nuevo = input("Introduce el email del contacto: ")
+            if email_nuevo == email:
+                comprobar = True
             else:
-                email.add(email_nuevo)
-                return email_nuevo
+                comprobar = False
+            validar_email(email_nuevo, email, comprobar)
+            if email_nuevo == "" or email_nuevo == " ":
+                noce = False
+                raise ValueError("el email no puede ser una cadena vacía")
+            elif email_nuevo.lower() in email:
+                noce = True
+                raise ValueError("el email ya existe en la agenda")
+            elif "@" not in email_nuevo:
+                noce = False
+                raise ValueError("el email no es un correo válido")
+        email.add(email_nuevo)
+        return email_nuevo
 
 
 def validar_telefono(telefono:str) -> bool:
@@ -128,9 +135,18 @@ def agregar_contacto(contactos:list, email):
     while pregunta != "s" and pregunta != "si":
         nombre = pedir_nombre()
         apellido = input("Introduce el apellido del contacto: ").capitalize()
-        email_nuevo = pedir_email(email)
+        correo = False
+        while not correo:
+            try:
+                email_nuevo = pedir_email(email)
+            except ValueError as e:
+                print(e)
+            else:
+                correo = True
         telefono = pedir_telefono()
         pregunta = preguntas("¿Está seguro que quiere añadir este contacto? (s/si/n/no) ")
+        if pregunta == "n" or pregunta == "no":
+            borrar_consola()
     contactos.append(dict([("nombre", nombre), ("apellido", apellido), ("email", email_nuevo), ("telefonos", telefono)]))
     print(f"Se ha añadido a {nombre} con éxito.")
 
@@ -173,6 +189,10 @@ def ordenar_por_nombre(contactos:list):
         while cont2 < len(contactos_ordenar):
             if contactos_ordenados[i]['nombre'] > contactos_ordenar[cont2]['nombre']:
                 contactos_ordenadosv2.append(contactos_ordenar[cont2])
+                for j in range(len(contactos_ordenadosv2),-1,-1):
+                    contactos_ordenadosv2.append(contactos_ordenar[cont2])
+                    if contactos_ordenados[j]['nombre'] > contactos_ordenar[cont2]['nombre']:
+                        contactos_ordenadosv2.append(contactos_ordenar[cont2])
                 del contactos_ordenar[cont2]
             cont2 +=1
     contactos_ordenadosv2.append(contactos_ordenar[0])
@@ -190,25 +210,28 @@ def mostrar_telefonos_34(j):
 
 
 def mostrar_contactos(contactos:list):
-    contactos_ordenados = ordenar_por_nombre(contactos)
-    print(f'AGENDA ({len(contactos)})')
-    print("-" * 6)
-    for i in contactos_ordenados:
-        print(f"Nombre: {i['nombre']} {i['apellido']} ({i['email']})")
-        if i['telefonos'] == []:
-            print(f'Teléfonos: ninguno')
-        else:
-            cont = 1
-            print("Teléfonos: ", end="")
-            for j in i['telefonos']:
-                if "+34" in j:
-                    j = mostrar_telefonos_34(j)
-                if cont < len(i['telefonos']):
-                    print(f'{j} / ', end="")
-                elif cont == len(i['telefonos']):
-                    print(f'{j}')
-                cont += 1
-        print('.' * 6)
+    if contactos == []:
+        print("No hay ningún contacto en la agenda.")
+    else:
+        contactos_ordenados = ordenar_por_nombre(contactos)
+        print(f'AGENDA ({len(contactos)})')
+        print("-" * 6)
+        for i in contactos_ordenados:
+            print(f"Nombre: {i['nombre']} {i['apellido']} ({i['email']})")
+            if i['telefonos'] == []:
+                print(f'Teléfonos: ninguno')
+            else:
+                cont = 1
+                print("Teléfonos: ", end="")
+                for j in i['telefonos']:
+                    if "+34" in j:
+                        j = mostrar_telefonos_34(j)
+                    if cont < len(i['telefonos']):
+                        print(f'{j} / ', end="")
+                    elif cont == len(i['telefonos']):
+                        print(f'{j}')
+                    cont += 1
+            print('.' * 6)
 
 
 def menu_modificar(contactos: list,pos:int):
@@ -228,6 +251,7 @@ def modificar_contacto(contactos: list, email: set):
     pos = buscar_contacto(contactos, buscador)
     opcion = 0
     while opcion != 6:
+        borrar_consola()
         menu_modificar(contactos,pos)
         opcion = pedir_opcion()
         if opcion == 1:
@@ -314,6 +338,7 @@ def agenda(contactos: list, email: set):
                 agregar_contacto(contactos,email)
                 pulse_tecla_para_continuar()
             elif opcion == 2:
+                borrar_consola()
                 modificar_contacto(contactos,email)
             elif opcion == 3:
                 borrar_consola()
@@ -389,7 +414,7 @@ def main():
     # - De igual manera, aunque existan espacios entre el prefijo y los 9 números al introducirlo, debe almacenarse sin espacios.
     # - Por ejemplo, será posible introducir el número +34 600 100 100, pero guardará +34600100100 y cuando se muestren los contactos, el telófono se mostrará como +34-600100100. 
     #TODO: Realizar una llamada a la función agregar_contacto con todo lo necesario para que funcione correctamente.
-    #agregar_contacto(contactos, email)
+    agregar_contacto(contactos, email)
 
 
     pulse_tecla_para_continuar()
