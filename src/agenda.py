@@ -79,7 +79,7 @@ def pedir_nombre()-> str:
     nombre = input("- Introduce el nombre del contacto: ").title()
     while nombre == "" or nombre == " ":
         print("**ERROR** vuleve a intentarlo.")
-        nombre = input("Introduce el nombre del contacto: ").title()
+        nombre = input("- Introduce el nombre del contacto: ").title()
     return nombre
 
 
@@ -169,7 +169,7 @@ def agregar_contacto(contactos:list, email:set):
     pregunta = "n"
     while pregunta != "s" and pregunta != "si":
         nombre = pedir_nombre()
-        apellido = input("- Introduce el apellido del contacto: ").capitalize()
+        apellido = input("- Introduce el apellido del contacto: ").title()
         correo = False
         while not correo:
             try:
@@ -182,9 +182,11 @@ def agregar_contacto(contactos:list, email:set):
         pregunta = preguntas("\n¿Está seguro que quiere añadir este contacto? (s/si/n/no) ")
         if pregunta == "n" or pregunta == "no":
             borrar_consola()
-    if nombre >= "L":
+    if nombre >= "G":
         contactos.append( dict([("nombre", nombre), ("apellido", apellido), ("email", email_nuevo), ("telefonos", telefono)]))
-    if nombre < "L" :
+    elif nombre < "G" and nombre > "P":
+        contactos.insert(3, dict([("nombre", nombre), ("apellido", apellido), ("email", email_nuevo), ("telefonos", telefono)]))
+    elif nombre <= "P" :
         contactos.insert(0, dict([("nombre", nombre), ("apellido", apellido), ("email", email_nuevo), ("telefonos", telefono)]))
     print(f"\n>> Se ha añadido a {nombre} {apellido} con éxito.")
 
@@ -224,10 +226,10 @@ def eliminar_contacto(contactos: list, email: str):
             email.remove(buscador)
             print("\n>> Se eliminó 1 contacto")
         else:
-            print("No se eliminó ningún contacto")
+            print("\n>> No se eliminó ningún contacto")
     except Exception:
-        print(f"\n**Error** Este contacto no existe en tu lista de contactos")
-        print("No se eliminó ningún contacto")
+        print(f"\n**ERROR** Este contacto no existe en tu lista de contactos")
+        print("\n>> No se eliminó ningún contacto")
 
 
 def ordenar_por_nombre(contactos:list)->list:
@@ -239,6 +241,7 @@ def ordenar_por_nombre(contactos:list)->list:
     """
     contactos_ordenados= []
     contactos_ordenar = contactos.copy()
+    # No es perfecto, sé que hay una manera de hacerlo en una línea pero quería hacerlo a mi manera aunque esto es todo lo que he conseguido
     for i in range(len(contactos)):
         cont2 = 0
         while cont2 < len(contactos_ordenar):
@@ -246,7 +249,6 @@ def ordenar_por_nombre(contactos:list)->list:
                 contactos_ordenados.append(contactos_ordenar[cont2])
                 del contactos_ordenar[cont2]
             cont2 +=1
-    contactos_ordenados.append(contactos_ordenar[0])
     return contactos_ordenados
 
 
@@ -303,6 +305,7 @@ def menu_modificar(contactos: list,pos:int):
     """
     borrar_consola()
     print(f"CONTACTO: {contactos[pos]['nombre']} {contactos[pos]['apellido']} ({contactos[pos]['email']}) Telefonos: ", end="")
+    # Si no tiene guardado ningún teléfono en la lista se printerá ninguno en los teléfonos. 
     if contactos[pos]['telefonos'] == []:
         print(f'ninguno')
     else:
@@ -333,9 +336,12 @@ def modificar_contacto(contactos: list, email: set):
             if opcion == 1:
                 contactos[pos]['nombre'] = pedir_nombre()
             elif opcion == 2:
-                contactos[pos]['apellido'] = input("Introduce el nuevo apellido: ")
+                contactos[pos]['apellido'] = input("Introduce el nuevo apellido: ").title()
             elif opcion == 3:
-                contactos[pos]['email'] = pedir_email(email)
+                try:
+                    contactos[pos]['email'] = pedir_email(email)
+                except ValueError as e:
+                    print(e)
             elif opcion == 4:
                 contactos[pos]['telefonos'] = pedir_telefono()
             elif opcion == 5:
@@ -352,10 +358,10 @@ def menu_por_criterio():
     """ Imprime por pantalla el menú para mostrar contactos por los criterios correspondientes
     """
     print("MOSTRAR CONTACTOS POR CRITERIOS\n" + "-"*31)
-    print("1. Mostrar contactos por Nombre")
-    print("2. Mostrar contactos por Apellido")
-    print("3. Mostrar contactos por Email")
-    print("4. Mostrar contactos por Télefono")
+    print("1. Buscar por Nombre")
+    print("2. Buscar por Apellido")
+    print("3. Buscar por Email")
+    print("4. Buscar por Télefono")
     print("5. Salir\n")
 
 
@@ -364,30 +370,84 @@ def mostrar_contactos_por_criterio(contactos:list, criterio:str, msj:str):
     Args:
         contactos (list): lista vacía  con todos los diccionarios con los datos de los contactos
         criterio (str): cadena que indica como 
+        msj (str): se le pasa el parametro en forma de mensaje con el que va a buscar la clave en el diccionrio
     """
     borrar_consola()
     msj_bonito = msj.replace("'","").upper()
     mensaje = f"CONTACTOR POR {msj_bonito}S\n"
     print(mensaje + "-"*len(mensaje))
     cont = 1
-    for i in contactos:
-        if criterio in i[msj]:
-            print(f"CONTACTO {cont}: {i['nombre']} {i['apellido']}  ({i['email']})  ", end="")
-            cont +=1
-            cont2 = 1
-            print("Teléfonos: ", end="")
-            if i['telefonos'] == []:
-                print(f'ninguno')
-            else:
-                for j in i['telefonos']:
-                    if "+34" in j:
-                        j = mostrar_telefonos_34(j)
-                    if cont2 < len(i['telefonos']):
-                        print(f'{j} / ', end="")
-                    elif cont2 == len(i['telefonos']):
-                        print(f'{j}')
-                    cont2 += 1
+    vacio = "si"
+    if criterio == "" or criterio == " ":
+        print("**ERROR** valor erróneo.")
+    else:
+        for i in contactos:
+            if criterio in i[msj] or criterio.lower() in i[msj]:
+                print(f"CONTACTO {cont}: {i['nombre']} {i['apellido']}  ({i['email']})  ", end="")
+                cont +=1
+                cont2 = 1
+                vacio = "no"
+                print("Teléfonos: ", end="")
+                if i['telefonos'] == []:
+                    print(f'ninguno')
+                else:
+                    for j in i['telefonos']:
+                        if "+34" in j:
+                            j = mostrar_telefonos_34(j)
+                        if cont2 < len(i['telefonos']):
+                            print(f'{j} / ', end="")
+                        elif cont2 == len(i['telefonos']):
+                            print(f'{j}')
+                        cont2 += 1
+        if vacio == "si":
+            print(f"No se ha encontrado ningún contacto con ese {msj_bonito.lower()}.")
     pulse_tecla_para_continuar()
+
+
+def mostrar_contactos_por_telefono(contactos:list, criterio:str):
+    """ Imprime por pantalla los contactos una vez pasados por el criterio de busqueda de teléfonos
+    Args:
+        contactos (list): lista vacía  con todos los diccionarios con los datos de los contactos
+        criterio (str): cadena que indica como 
+    """
+    mensaje = f"CONTACTOR POR TÉLEFONOS\n"
+    print(mensaje + "-"*len(mensaje))
+    cont = 1
+    vacio = "si"
+    if criterio == "" or criterio == " ":
+        print("**ERROR** valor erróneo.")
+    else:
+        for i in contactos:
+            comprobar = ""
+            comprobar2 = f"Contacto {cont}: {i['nombre']} {i['apellido']} {i['email']} "
+            if criterio == "ninguno" and i['telefonos'] == []:
+                    print(f"Contacto {cont}: {i['nombre']} {i['apellido']} {i['email']} Teléfonos: ", end="")
+                    if i['telefonos'] == []:
+                            print(f'ninguno')
+                    cont += 1
+                    vacio = "no"
+            for j in i['telefonos']:
+                if criterio in j:
+                    if comprobar != comprobar2:
+                        comprobar = f"Contacto {cont}: {i['nombre']} {i['apellido']} {i['email']} "
+                        print(f"Contacto {cont}: {i['nombre']} {i['apellido']} {i['email']} ", end="")
+                        cont +=1
+                        cont2 = 1
+                        print("Teléfonos: ", end="")
+                        vacio = "no"
+                        if i['telefonos'] == []:
+                            print(f'ninguno')
+                        else:
+                            for j in i['telefonos']:
+                                if "+34" in j:
+                                    j = mostrar_telefonos_34(j)
+                                if cont2 < len(i['telefonos']):
+                                    print(f'{j} / ', end="")
+                                elif cont2 == len(i['telefonos']):
+                                    print(f'{j}')
+                                cont2 += 1
+        if vacio == "si":
+            print("No se ha encontrado ningún contacto con ese teléfono.")
 
 def mostrar_por_criterio(contactos):
     """ muestra el menu, pide la ocion y ejecuta la opcion elegida
@@ -395,7 +455,6 @@ def mostrar_por_criterio(contactos):
         contactos (list): lista vacía  con todos los diccionarios con los datos de los contactos
     """
     opcion = 0
-    cont = 1
     while opcion != 5:
         borrar_consola()
         menu_por_criterio()
@@ -406,37 +465,18 @@ def mostrar_por_criterio(contactos):
             pulse_tecla_para_continuar()
         else:
             if opcion == 1:
-                criterio = input("Introduce una letra o palabra para mostrar los contactos: ")
+                criterio = input("Introduce una letra o un nombre para mostrar los contactos: ").capitalize()
                 mostrar_contactos_por_criterio(contactos, criterio, 'nombre')
             elif opcion == 2:
-                criterio = input("Introduce una letra o palabra para mostrar los contactos: ")
+                criterio = input("Introduce una letra o un apellido para mostrar los contactos: ").capitalize()
                 mostrar_contactos_por_criterio(contactos, criterio, 'apellido')
             elif opcion == 3:
-                criterio = input("Introduce una letra o palabra para mostrar los contactos: ")
+                criterio = input("Introduce una letra o un email para mostrar los contactos: ").lower()
                 mostrar_contactos_por_criterio(contactos, criterio, 'email')
             elif opcion == 4:
-                criterio = input("Introduce una letra o palabra para mostrar los contactos: ")
+                criterio = input("Introduce una número o un teléfono para mostrar los contactos: ").lower()
                 borrar_consola()
-                mensaje = f"CONTACTOR POR TÉLEFONOS\n"
-                print(mensaje + "-"*len(mensaje))
-                for i in contactos:
-                    for j in i['telefonos']:
-                        if criterio in j:
-                            print(f"Contacto {cont}: {i['nombre']} {i['apellido']} {i['email']} ", end="")
-                            cont +=1
-                            cont2 = 1
-                            print("Teléfonos: ", end="")
-                            if i['telefonos'] == []:
-                                print(f'ninguno')
-                            else:
-                                for j in i['telefonos']:
-                                    if "+34" in j:
-                                        j = mostrar_telefonos_34(j)
-                                    if cont2 < len(i['telefonos']):
-                                        print(f'{j} / ', end="")
-                                    elif cont2 == len(i['telefonos']):
-                                        print(f'{j}')
-                                    cont2 += 1
+                mostrar_contactos_por_telefono(contactos, criterio)
                 pulse_tecla_para_continuar()
             elif opcion != 1 and  opcion != 2 and  opcion != 3 and  opcion != 4 and opcion != 5:
                 print("**ERROR** opción errónea.")
@@ -449,7 +489,7 @@ def vaciar_agenda(contactos:list):
         contactos (list): lista vacía  con todos los diccionarios con los datos de los contactos
     """
     contactos.clear()
-    print("Lista vaciada correctamente.")
+    print("\n>> Lista vaciada correctamente.")
     pulse_tecla_para_continuar()
 
 
@@ -493,7 +533,6 @@ def agenda(contactos: list, email: set):
     while opcion != 8:
         mostrar_menu()
         opcion = pedir_opcion()
-
         #TODO: Se valorará que utilices la diferencia simétrica de conjuntos para comprobar que la opción es un número entero del 1 al 7
         diferencia = diferencia_simetrica()
         if opcion in diferencia:
@@ -510,12 +549,10 @@ def agenda(contactos: list, email: set):
                 eliminar_contacto(contactos,email)
                 pulse_tecla_para_continuar()
             elif opcion == 4:
-                borrar_consola()
                 vaciar_agenda(contactos)
             elif opcion == 5:
-                borrar_consola()
                 cargar_contactos(contactos)
-                print("Lista cargada correctamete.")
+                print("\n>> Lista cargada correctamete.")
                 pulse_tecla_para_continuar()
             elif opcion == 6:
                 borrar_consola()
@@ -558,6 +595,7 @@ def guardar_email(contactos: list) -> set:
         email.add(i['email'])
     return email
 
+
 def preguntas(msj:str)->str:
     """ Pregunta un mensaje que se responderá con si o no
     Args:
@@ -565,7 +603,7 @@ def preguntas(msj:str)->str:
     Returns:
         str: retorna el resultado de la pregunta (s, si, n, no)
     """
-    pregunta = input(msj)
+    pregunta = input(msj).lower()
     while pregunta != "s" and pregunta != "si" and pregunta != "n" and pregunta != "no":
         print("**ERROR** entrada inválida")
         pregunta = input(msj)
@@ -610,20 +648,6 @@ def main():
 
     #TODO: Crear función mostrar_contactos para que muestre todos los contactos de la agenda con el siguiente formato:
     # ** IMPORTANTE: debe mostrarlos ordenados según el nombre, pero no modificar la lista de contactos de la agenda original **
-    #
-    # AGENDA (6)
-    # ------
-    # Nombre: Antonio Amargo (aamargo@gmail.com)
-    # Teléfonos: niguno
-    # ......
-    # Nombre: Daniela Alba (danalba@gmail.com)
-    # Teléfonos: +34-600606060 / +34-670898934
-    # ......
-    # Nombre: Laura Iglesias (liglesias@gmail.com)
-    # Teléfonos: 666777333 / 666888555 / 607889988
-    # ......
-    # ** resto de contactos **
-    #
     #TODO: Realizar una llamada a la función mostrar_contactos con todo lo necesario para que funcione correctamente.
     mostrar_contactos(contactos)
 
@@ -631,19 +655,6 @@ def main():
     borrar_consola()
 
     #TODO: Crear un menú para gestionar la agenda con las funciones previamente desarrolladas y las nuevas que necesitéis:
-    # AGENDA
-    # ------
-    # 1. Nuevo contacto
-    # 2. Modificar contacto
-    # 3. Eliminar contacto
-    # 4. Vaciar agenda
-    # 5. Cargar agenda inicial
-    # 6. Mostrar contactos por criterio
-    # 7. Mostrar la agenda completa
-    # 8. Salir
-    #
-    # >> Seleccione una opción: 
-    #
     #TODO: Para la opción 3, modificar un contacto, deberás desarrollar las funciones necesarias para actualizar la información de un contacto.
     #TODO: También deberás desarrollar la opción 6 que deberá preguntar por el criterio de búsqueda (nombre, apellido, email o telefono) y el valor a buscar para mostrar los contactos que encuentre en la agenda.
     agenda(contactos,email)
